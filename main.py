@@ -29,7 +29,9 @@ def predict(image_path, model):
     img=cv2.resize(img,(100,100))
     img=cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
     I.append(img)
-    R = MODEL.predict_classes(np.array(I))
+    NP_ARRAY = np.array(I)
+    X_VAL = NP_ARRAY/255.0
+    R = MODEL.predict_classes(X_VAL)
     if(R[0]==0):
         return 'BOA SEM MANCHAS'
     if(R[0]==1):
