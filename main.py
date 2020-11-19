@@ -92,6 +92,6 @@ def upload_predict():
 
 if __name__ == "__main__":
     
-    MODEL=load_model('./rottenvsfresh.h5')   
+    MODEL=load_model('./h5/rottenvsfresh.h5')   
     
     app.run(host='0.0.0.0', port='5000', debug=True)
