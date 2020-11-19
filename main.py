@@ -14,6 +14,9 @@ import torch
 import cv2
 import numpy as np
 from keras.models import Model, load_model
+from pymongo import MongoClient
+import base64
+import datetime
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "static"
@@ -32,35 +35,63 @@ def predict(image_path, model):
     NP_ARRAY = np.array(I)
     X_VAL = NP_ARRAY/255.0
     R = MODEL.predict_classes(X_VAL)
-    if(R[0]==0):
-        return 'BOA SEM MANCHAS'
-    if(R[0]==1):
-        return 'RUIM'
-    if(R[0]==2):
-        return 'BOA COM MANCHAS'
+    #model.predict(X_VAL) > 0.5).astype("int32")
+
     
-    return MODEL.predict_classes(np.array(I))
+    LABEL=''
 
+    if(R[0]==0):
+        LABEL = 'BOA SEM MANCHAS'
+    if(R[0]==1):
+        LABEL = 'RUIM'
+    if(R[0]==2):
+        LABEL = 'BOA COM MANCHAS'
 
+    connect_and_save_mongo(LABEL, img)
+
+    return LABEL
+def connect_and_save_mongo(classification, img):
+    
+	print('conectando mongo')
+	#Conecta mongo local
+	cliente_prod = MongoClient('mongodb://admin:admin@localhost:27017/admin')
+
+	db_prod   = cliente_prod.teste
+	coll_prod = db_prod.teste
+	mydict = { "classification": classification, "image":base64.b64encode(img), 'timestamp': datetime.datetime.now() }
+	coll_prod.insert(mydict)
+	print('insert realizado')
+    
+    #Manda p/ eletronica
+
+    #Salva mongo
+
+    #Faz o reduce dos resultados (pega varias fotos da mesma laranja e retorna um resultado)   
 
 
 @app.route("/", methods=["GET", "POST"])
 def upload_predict():
+    
+    teste = []
     if request.method == "POST":
-        image_file = request.files["image"]
-        if image_file:
-            image_location = os.path.join(
-                UPLOAD_FOLDER,
-                image_file.filename
-            )
-            image_file.save(image_location)
-            pred = predict(image_location, MODEL)
-            return render_template("index.html", prediction=pred, image_loc='./static/'+image_file.filename)
-    return render_template("index.html", prediction=0, image_loc=None)
+        image_file = request.files.getlist("image")
+        
+        for image in image_file:
+
+            if image:
+                image_location = os.path.join(
+                    UPLOAD_FOLDER,
+                    image.filename
+                )
+                image.save(image_location)
+                pred = predict(image_location, MODEL)
+                teste.append({'url': './static/'+image.filename, 'label': pred})
+    #return render_template("index.html", prediction=0, image_loc=None)
+    return render_template("index.html", image_locs=teste)
 
 
 if __name__ == "__main__":
     
     MODEL=load_model('./rottenvsfresh.h5')   
     
-    app.run()
+    app.run(host='0.0.0.0', port='5000', debug=True)

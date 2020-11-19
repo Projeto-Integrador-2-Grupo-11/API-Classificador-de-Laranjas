@@ -18,12 +18,14 @@
       <h1 class="h2 mb-3 font-weight-normal">Classificador de Laranja</h1>
       <br>
       <h1 class="h6 mb-3 font-weight-normal">Please upload image</h1>
-      <input type="file" id="image" name="image" class="form-control" required autofocus>
+      <input type="file" id="image" name="image" multiple="" class="form-control" required autofocus>
       <button class="btn btn-lg btn-primary btn-block" type="submit">Detect</button>
       <br>
-      {% if image_loc %}
-        <img class="mb-4" src="{{image_loc}}" alt="" width="256" height="256">
-        <h3 class="h3 mb-3 font-weight-normal">{{prediction}}</h3>
+      {% if image_locs %}
+      {% for url in image_locs %}
+      <img src="{{url.url}}" alt="" width="256" height="256"/>
+      <h3 class="h3 mb-3 font-weight-normal">{{url.label}}</h3>
+      {% endfor %}
       {%endif%}
     </form>
   </body>

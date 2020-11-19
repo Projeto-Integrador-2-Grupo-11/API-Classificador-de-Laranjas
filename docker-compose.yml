@@ -1,11 +1,8 @@
-web:
-  build: .
-  command: python -u main.py
+mongo:
+  image: mongo
   ports:
-    - "5000:5000"
-  volumes:
-    - .:/todo
-  links:
-    - db
-db:
-  image: mongo:3.0.2
+    - 27017:27017
+  environment:
+    MONGO_INITDB_ROOT_USERNAME: admin
+    MONGO_INITDB_ROOT_PASSWORD: admin 
+    MONGO_INITDB_DATABASE: project
