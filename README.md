@@ -27,5 +27,17 @@ A API do projeto foi desenvolvida com o intuito de facilitação e aplicação d
 * Base64
 * Datetime
 
+## Rodando o projeto
+
+Para rodar o projeto é necessário rodar os seguintes comandos: 
+
+### pip install -r requirements.txt
+
+
+### sudo docker-compose up --build (Subir mongoDB)
+
+
+### python3 main.py (Executar api flask)
+
 
 
