@@ -6,23 +6,21 @@ import os
 from flask import Flask
 from flask import request
 from flask import render_template
-import torch.nn.functional as F
-import torch.optim as optim
-import torch.nn as nn
-from torchvision import transforms
-import torch
 import cv2
 import numpy as np
 from keras.models import Model, load_model
 from pymongo import MongoClient
 import base64
 import datetime
+import socket
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "static"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 DEVICE = "cpu"
 MODEL = None
+HOST = '127.0.0.1'
+PORT = 8082
 
 
 def predict(image_path, model):
@@ -46,6 +44,11 @@ def predict(image_path, model):
         LABEL = 'RUIM'
     if(R[0]==2):
         LABEL = 'BOA COM MANCHAS'
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((HOST, PORT))
+        s.sendall(str.encode(LABEL))
+        data = s.recv(1024)
 
     connect_and_save_mongo(LABEL, img)
 
@@ -92,6 +95,6 @@ def upload_predict():
 
 if __name__ == "__main__":
     
-    MODEL=load_model('./h5/rottenvsfresh.h5')   
+    MODEL=load_model('./h5/rottenvsfresh.h5')
     
     app.run(host='0.0.0.0', port='5000', debug=True)
