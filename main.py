@@ -76,6 +76,7 @@ def upload_predict():
     if request.method == "POST":
         image_file = request.files.getlist("image")
         
+        PRED = []
         for image in image_file:
 
             if image:
@@ -85,8 +86,14 @@ def upload_predict():
                 )
                 image.save(image_location)
                 pred = predict(image_location, MODEL)
+                PRED.append(pred)
                 teste.append({'url': './static/'+image.filename, 'label': pred})
     #return render_template("index.html", prediction=0, image_loc=None)
+
+    FINAL = ''
+    #if(PRED[0]==PRED[1]):
+    #    FINAL = PRED[0]
+
     return render_template("index.html", image_locs=teste)
 
 
