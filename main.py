@@ -48,28 +48,39 @@ def predict(image_path, model):
         LABEL = 'BOA COM MANCHAS'
 
     # Cria um objeto socket
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        # Conecta ao servidor
-        s.connect((HOST, PORT))
-        # Envia a mensagem - LABEL ('BOA COM MANCHAS', 'BOA SEM MANCHAS', 'RUIM')
-        s.sendall(str.encode(LABEL))
-        # Lê a resposta do servidor
-        data = s.recv(1024)
+    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    #     # Conecta ao servidor
+    #     s.connect((HOST, PORT))
+    #     # Envia a mensagem - LABEL ('BOA COM MANCHAS', 'BOA SEM MANCHAS', 'RUIM')
+    #     s.sendall(str.encode(LABEL))
+    #     # Lê a resposta do servidor
+    #     data = s.recv(1024)
 
     connect_and_save_mongo(LABEL, img)
 
     return LABEL
+    
 def connect_and_save_mongo(classification, img):
     
-	print('conectando mongo')
-	#Conecta mongo local
-	cliente_prod = MongoClient('mongodb://admin:admin@localhost:27017/admin')
+    print('conectando mongo')
+    #Conecta mongo local
+    logs_prod    = MongoClient('mongodb://admin:admin@localhost:27017/local?authSource=admin')
+    cliente_prod = MongoClient('mongodb://admin:admin@localhost:27017/orange_classification?authSource=admin')
+        
+    db_logs   = logs_prod.local
+    db_prod   = cliente_prod.orange_classification
 
-	db_prod   = cliente_prod.teste
-	coll_prod = db_prod.teste
-	mydict = { "classification": classification, "image":base64.b64encode(img), 'timestamp': datetime.datetime.now().strftime("%d%m%Y") }
-	coll_prod.insert(mydict)
-	print('insert realizado')
+    coll_logs = db_logs.startup_log
+    coll_prod = db_prod.oranges
+
+    print(coll_logs)
+    actual_connection = coll_logs.find({}).sort('_id', -1).limit(1)
+    for x in actual_connection:
+        batch = x['_id']
+
+    mydict = { "classification": classification, "image":base64.b64encode(img), 'batch': batch, 'date': datetime.datetime.now() }
+    coll_prod.insert(mydict)
+    print('insert realizado')
     
     #Manda p/ eletronica
 
