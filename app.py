@@ -6,11 +6,6 @@ import os
 from flask import Flask
 from flask import request
 from flask import render_template
-import torch.nn.functional as F
-import torch.optim as optim
-import torch.nn as nn
-from torchvision import transforms
-import torch
 import cv2
 import numpy as np
 from keras.models import Model, load_model
@@ -20,19 +15,17 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "static"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 DEVICE = "cpu"
-MODEL = None
+MODEL = load_model('./h5/rottenvsfresh.h5')
 
 
 def connect_and_save_mongo(classification):
-    
     print('conectando mongo')
     #Conecta mongo local
-	cliente_prod = MongoClient('mongodb://admin:admin@localhost:27017/admin')
-
-	db_prod   = cliente_prod.admin
-	coll_prod = db_prod.new_collection
-	mydict = { "classification": classification, "image": "image 1" }
-	coll_prod.insert_one(mydict)
+    cliente_prod = MongoClient('mongodb://admin:admin@localhost:27017/admin')
+    db_prod   = cliente_prod.admin
+    coll_prod = db_prod.new_collection
+    mydict = { "classification": classification, "image": "image 1" }
+    coll_prod.insert_one(mydict)
     print('insert realizado')
 
 def predict(image_path, model):
@@ -45,7 +38,7 @@ def predict(image_path, model):
     NP_ARRAY = np.array(I)
     X_VAL = NP_ARRAY/255.0
     R = MODEL.predict_classes(X_VAL)
-    print(model.predict(X_VAL) > 0.5).astype("int32"))
+    print(model.predict((X_VAL) > 0.5).astype("int32"))
     #Salva mongo
     connect_and_save_mongo(R[0])
 

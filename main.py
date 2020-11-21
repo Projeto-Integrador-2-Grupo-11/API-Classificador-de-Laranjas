@@ -13,6 +13,8 @@ from pymongo import MongoClient
 import base64
 import datetime
 import socket
+from datetime import date, timedelta
+
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "static"
@@ -65,7 +67,7 @@ def connect_and_save_mongo(classification, img):
 
 	db_prod   = cliente_prod.teste
 	coll_prod = db_prod.teste
-	mydict = { "classification": classification, "image":base64.b64encode(img), 'timestamp': datetime.datetime.now() }
+	mydict = { "classification": classification, "image":base64.b64encode(img), 'timestamp': datetime.datetime.now().strftime("%d%m%Y") }
 	coll_prod.insert(mydict)
 	print('insert realizado')
     
