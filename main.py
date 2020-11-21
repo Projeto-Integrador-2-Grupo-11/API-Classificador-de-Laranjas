@@ -64,8 +64,8 @@ def connect_and_save_mongo(classification, img):
     
     print('conectando mongo')
     #Conecta mongo local
-    logs_prod    = MongoClient('mongodb://admin:admin@localhost:27018/local?authSource=admin')
-    cliente_prod = MongoClient('mongodb://admin:admin@localhost:27018/orange_classification?authSource=admin')
+    logs_prod    = MongoClient('mongodb://admin:admin@localhost:27017/local?authSource=admin')
+    cliente_prod = MongoClient('mongodb://admin:admin@localhost:27017/orange_classification?authSource=admin')
         
     db_logs   = logs_prod.local
     db_prod   = cliente_prod.orange_classification
