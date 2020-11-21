@@ -45,9 +45,13 @@ def predict(image_path, model):
     if(R[0]==2):
         LABEL = 'BOA COM MANCHAS'
 
+    # Cria um objeto socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        # Conecta ao servidor
         s.connect((HOST, PORT))
+        # Envia a mensagem - LABEL ('BOA COM MANCHAS', 'BOA SEM MANCHAS', 'RUIM')
         s.sendall(str.encode(LABEL))
+        # Lê a resposta do servidor
         data = s.recv(1024)
 
     connect_and_save_mongo(LABEL, img)
