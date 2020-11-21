@@ -23,7 +23,7 @@ DEVICE = "cpu"
 MODEL = None
 HOST = '127.0.0.1'
 PORT = 8082
-
+MACHINE_ID = 2 # SEMPRE ATUALIZAR
 
 def predict(image_path, model):
     I = []
@@ -64,24 +64,54 @@ def connect_and_save_mongo(classification, img):
     
     print('conectando mongo')
     #Conecta mongo local
-    logs_prod    = MongoClient('mongodb://admin:admin@localhost:27017/local?authSource=admin')
-    cliente_prod = MongoClient('mongodb://admin:admin@localhost:27017/orange_classification?authSource=admin')
+    logs_prod    = MongoClient('mongodb://admin:admin@localhost:27018/local?authSource=admin')
+    cliente_prod = MongoClient('mongodb://admin:admin@localhost:27018/orange_classification?authSource=admin')
         
     db_logs   = logs_prod.local
     db_prod   = cliente_prod.orange_classification
 
     coll_logs = db_logs.startup_log
     coll_prod = db_prod.oranges
+    coll_quantity = db_prod.quantity_oranges
 
-    print(coll_logs)
     actual_connection = coll_logs.find({}).sort('_id', -1).limit(1)
     for x in actual_connection:
         batch = x['_id']
 
-    mydict = { "classification": classification, "image":base64.b64encode(img), 'batch': batch, 'date': datetime.datetime.now() }
-    coll_prod.insert(mydict)
-    print('insert realizado')
+    orange = { "classification": classification, "image":base64.b64encode(img), 'batch': batch, 'date': datetime.datetime.now() }
+    coll_prod.insert(orange)
+    print('insert realizado da laranja')
     
+    check_quantity_oranges = coll_quantity.find({ 'batch': batch }).sort('_id', -1).limit(1)
+    if (check_quantity_oranges.count()==0): 
+        print("Criando novo lote")
+        if (classification == "BOA SEM MANCHAS"):
+            quantity_oranges = { 'batch': batch, 'date': datetime.datetime.now(), 'machine_id': MACHINE_ID, 'good_with_spots': 0, 'bad': 0, 'good_spotless': 1 }
+        if (classification == "RUIM"):
+            quantity_oranges = { 'batch': batch, 'date': datetime.datetime.now(), 'machine_id': MACHINE_ID, 'good_with_spots': 0, 'bad': 1, 'good_spotless': 0 }
+        if (classification == "BOA COM MANCHAS"):
+            quantity_oranges = { 'batch': batch, 'date': datetime.datetime.now(), 'machine_id': MACHINE_ID, 'good_with_spots': 1, 'bad': 0, 'good_spotless': 0 }
+        coll_quantity.insert(quantity_oranges)
+    else:
+        print("Atualizando lote existente")
+        if (classification == "BOA SEM MANCHAS"):
+            for doc in check_quantity_oranges:
+                print(doc)
+                good_spotless = doc['good_spotless']
+            good_spotless = good_spotless + 1
+            coll_quantity.update_one({ 'batch': batch }, {"$set": { "good_spotless": good_spotless }})
+        if (classification == "RUIM"):
+            for doc in check_quantity_oranges:
+                bad = doc['bad']
+            bad = bad + 1
+            coll_quantity.update_one({ 'batch': batch }, {"$set": { "bad": bad }})
+        if (classification == "BOA COM MANCHAS"):
+            for doc in check_quantity_oranges:
+                good_with_spots = doc['good_with_spots']
+            good_with_spots = good_with_spots + 1
+            coll_quantity.update_one({ 'batch': batch }, {"$set": { "good_with_spots": good_with_spots }})
+        
+
     #Manda p/ eletronica
 
     #Salva mongo
