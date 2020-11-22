@@ -79,7 +79,7 @@ def connect_and_save_mongo(classification, img):
     for x in actual_connection:
         batch = x['_id']
 
-    orange = { "classification": classification, "image":base64.b64encode(img), 'batch': batch, 'date': datetime.datetime.now() }
+    orange = { "classification": classification, "machine_id": MACHINE_ID, "image":base64.b64encode(img), 'batch': batch, 'date': datetime.datetime.now() }
     coll_prod.insert(orange)
     print('insert realizado da laranja')
     
