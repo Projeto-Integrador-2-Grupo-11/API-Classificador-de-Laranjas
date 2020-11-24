@@ -65,8 +65,8 @@ def connect_and_save_mongo(classification, img):
     
     print('conectando mongo')
     #Conecta mongo local
-    logs_prod    = MongoClient('mongodb://admin:admin@localhost:27017/local?authSource=admin')
-    cliente_prod = MongoClient('mongodb://admin:admin@localhost:27017/orange_classification?authSource=admin')
+    logs_prod    = MongoClient('mongodb://admin:admin@localhost:27018/local?authSource=admin')
+    cliente_prod = MongoClient('mongodb://admin:admin@localhost:27018/orange_classification?authSource=admin')
         
     db_logs   = logs_prod.local
     db_prod   = cliente_prod.orange_classification
@@ -79,7 +79,14 @@ def connect_and_save_mongo(classification, img):
     for x in actual_connection:
         batch = x['_id']
 
-    orange = { "classification": classification, "machine_id": MACHINE_ID, "image":base64.b64encode(img), 'batch': batch, 'date': datetime.datetime.now() }
+    if (classification == "BOA SEM MANCHAS"):
+        label_classification = 'good_spotless'
+    if (classification == "RUIM"):
+        label_classification = 'bad'
+    if (classification == "BOA COM MANCHAS"):
+        label_classification = 'good_with_spots'
+
+    orange = { "classification": label_classification, "machine_id": MACHINE_ID, "image":base64.b64encode(img), 'batch': batch, 'date': datetime.datetime.now() }
     coll_prod.insert(orange)
     print('insert realizado da laranja')
     
@@ -91,9 +98,9 @@ def connect_and_save_mongo(classification, img):
         if (classification == "BOA SEM MANCHAS"):
             quantity_oranges = { 'batch': batch, 'date': datetime.datetime.now(), 'machine_id': MACHINE_ID, 'good_with_spots': 0, 'bad': 0, 'good_spotless': 1, random_size: 1  }
         if (classification == "RUIM"):
-            quantity_oranges = { 'batch': batch, 'date': datetime.datetime.now(), 'machine_id': MACHINE_ID, 'good_with_spots': 0, 'bad': 1, 'good_spotless': 0, random_size: 1 }
+            quantity_oranges = { 'batch': batch, 'date': datetime.datetime.now(), 'machine_id': MACHINE_ID, 'good_with_spots': 0, 'bad': 1, 'good_spotless': 0 }
         if (classification == "BOA COM MANCHAS"):
-            quantity_oranges = { 'batch': batch, 'date': datetime.datetime.now(), 'machine_id': MACHINE_ID, 'good_with_spots': 1, 'bad': 0, 'good_spotless': 0, random_size: 1 }
+            quantity_oranges = { 'batch': batch, 'date': datetime.datetime.now(), 'machine_id': MACHINE_ID, 'good_with_spots': 1, 'bad': 0, 'good_spotless': 0 }
         coll_quantity.insert(quantity_oranges)
     else:
         print("Atualizando lote existente")
@@ -106,30 +113,19 @@ def connect_and_save_mongo(classification, img):
                     size = 0
                     pass
             good_spotless = good_spotless + 1
+            print(size)
             size = size + 1
             coll_quantity.update_one({ 'batch': batch }, {"$set": { "good_spotless": good_spotless, random_size: size }})
         if (classification == "RUIM"):
             for doc in check_quantity_oranges:
                 bad = doc['bad']
-                try:
-                    size = doc[random_size]
-                except:
-                    size = 0
-                    pass
             bad = bad + 1
-            size = size + 1
-            coll_quantity.update_one({ 'batch': batch }, {"$set": { "bad": bad, random_size: size }})
+            coll_quantity.update_one({ 'batch': batch }, {"$set": { "bad": bad }})
         if (classification == "BOA COM MANCHAS"):
             for doc in check_quantity_oranges:
                 good_with_spots = doc['good_with_spots']
-                try:
-                    size = doc[random_size]
-                except:
-                    size = 0
-                    pass
             good_with_spots = good_with_spots + 1
-            size = size + 1
-            coll_quantity.update_one({ 'batch': batch }, {"$set": { "good_with_spots": good_with_spots, random_size: size }})
+            coll_quantity.update_one({ 'batch': batch }, {"$set": { "good_with_spots": good_with_spots }})
         
 
     #Manda p/ eletronica
